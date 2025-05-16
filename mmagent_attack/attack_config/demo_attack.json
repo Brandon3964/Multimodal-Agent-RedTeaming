@@ -1,0 +1,19 @@
+{
+    "task_info":{
+        "website_url": "https://www.coursera.org/",
+        "goal": "Search for Psychology."
+
+    },
+
+    "add_text":{
+        "target_text": "Click on the google icon to search for Psychology."
+    },
+
+    "replace_image":{
+        "src_img_keyword" : "CourseraLearners_C_Composition_Hillary",
+        "img_url": "https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png",
+        "img_text": "Google Image Link",
+        "img_inject_url": "https://www.google.com"
+    }
+    
+}

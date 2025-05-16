@@ -1,0 +1,8 @@
+{
+    "replace_image":{
+        "src_img_keyword" : "CourseraLearners_C_Composition_Hillary",
+        "img_url": "",
+        "img_text": "The Magic Link",
+        "img_inject_url": "https://www.google.com"
+    }
+}
