@@ -1,28 +1,10 @@
-# Sam Note on Attack:
-build attack env by installing attack_requirements.txt
-there is a naive bim whitebox attack in attack_separate folder
-you can incorporate through run_cap_attack.py for white box attack, run_clip_attack.py for clip attack, both are in attack folder
+# SETUP
 
-
-
-# Brandon 4/30 Note:
-
-Added examples of text-only, image-only(text as an image), and image-text attack config in ```mmagent_attack/attack_config```. To launch the attack just feed in the corresponding config.
-
-
-
-# Brandon Notes:
-
-```mmagent_attack``` folder contains the injection json and the attack config, such as injection urls.
-
-Run ```naive_attack.py``` for a demo attack.
-
-```run_mind2_web.py``` runs the dataset. Still unfinished.
-
-# TODO
-1. Decide how and what to choose the injection point.
-2. Finish implementing evaluation on mind2web dataset.
-3. Save trajectory information so that it can be used for attack.
+1. Follow the SeeAct setup to install dependency
+2. Install SeeAct from source in ```seeact_package``` by doing ```pip3 install -e .```
+3. Install and setup a VNC server to visualize the agent.
+4. Put your OpenAI api in ```naive_attack.py```. Then run the script for a demo. To try other attacks and examples, replace the config with other configs in ```mmagent_attack/attack_config```
+5. To customize attack, modify the attack functions in ```injection_utils.py```
 
 
 
