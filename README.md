@@ -1,3 +1,8 @@
+# 6/8/2025 updates
+Run ```scripts/run_attack.sh``` to run an automatic attack that extract injection point, generate attack image, then perform attack.
+
+
+
 # SETUP
 
 1. Follow the SeeAct setup to install dependency
