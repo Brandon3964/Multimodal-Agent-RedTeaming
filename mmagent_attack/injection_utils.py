@@ -198,20 +198,59 @@ def replace_image(src_img_keyword, target_img_url, target_img_text, target_web_l
 #     return js_code
 
 
+# def extract_image_info(min_width=200, min_height=200):
+#     js_code = f"""
+#         () => {{
+#             return Array.from(document.querySelectorAll('img'))
+#                 .filter(img => {{
+#                     const rect = img.getBoundingClientRect();
+#                     return (
+#                         img.width >= {min_width} &&
+#                         img.height >= {min_height} &&
+#                         img.alt != "Placeholder" &&
+#                         rect.top >= 0 &&
+#                         rect.left >= 0 &&
+#                         rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+#                         rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+#                     );
+#                 }})
+#                 .map(img => {{
+#                     return {{
+#                         src: img.src,
+#                         alt: img.alt,
+#                         width: img.width,
+#                         height: img.height,
+#                         naturalWidth: img.naturalWidth,
+#                         naturalHeight: img.naturalHeight,
+#                         title: img.title
+#                     }};
+#                 }});
+#         }}
+#     """
+#     return js_code
+
+
 def extract_image_info(min_width=200, min_height=200):
     js_code = f"""
         () => {{
             return Array.from(document.querySelectorAll('img'))
                 .filter(img => {{
                     const rect = img.getBoundingClientRect();
+                    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+                    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+
+                    const isVisible = (
+                        rect.bottom > 0 &&
+                        rect.right > 0 &&
+                        rect.top < viewportHeight &&
+                        rect.left < viewportWidth
+                    );
+
                     return (
                         img.width >= {min_width} &&
                         img.height >= {min_height} &&
                         img.alt != "Placeholder" &&
-                        rect.top >= 0 &&
-                        rect.left >= 0 &&
-                        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+                        isVisible
                     );
                 }})
                 .map(img => {{

@@ -67,7 +67,11 @@ class SeeActAgent:
                  rate_limit=-1,
                  model="gpt-4o",
                  temperature=0.9,
-                 injections=[]
+                 injections=[],
+                 episode_name="default",
+                 inference_mode="clean",
+                 image_json=None,
+                 past_history=None
                  ):
 
         try:
@@ -154,7 +158,15 @@ class SeeActAgent:
         #     self.dev_logger.addHandler(handler)
 
         self.engine = engine_factory(**self.config['openai'])
-        self.taken_actions = []
+
+        if past_history is None:
+            self.taken_actions = []
+        else:
+            with open(past_history, "r") as f:
+                actions = [line.rstrip("\n") for line in f]
+            self.logger.info(f"Loaded {len(actions)} actions from: {past_history}")
+            self.taken_actions = actions
+
 
         if self.config["agent"]["grounding_strategy"] == "pixel_2_stage":
             self.prompts = self._initialize_prompts_pure_vision()
@@ -168,6 +180,9 @@ class SeeActAgent:
 
 
         self.injections = injections
+        self.episode_name = episode_name
+        self.inference_mode = inference_mode
+        self.image_json = image_json
 
     def _initialize_prompts(self):
         """Initialize prompt information including dynamic action space."""
@@ -359,7 +374,7 @@ To be successful, it is important to follow the following rules:
 
     def save_action_history(self, filename="action_history.txt"):
         """Save the history of taken actions to a file in the main path."""
-        history_path = os.path.join(self.main_path, filename)
+        history_path = filename
         with open(history_path, 'w') as f:
             for action in self.taken_actions:
                 f.write(action + '\n')
@@ -433,6 +448,7 @@ To be successful, it is important to follow the following rules:
         # assert task is not None, "Please input the task."
 
         prompt_list = []
+
         if self.config["agent"]["grounding_strategy"] == "pixel_2_stage":
             system_prompt_input = self.prompts["system_prompt"]
             question_description_input = self.prompts["question_description"]
@@ -594,6 +610,11 @@ To be successful, it is important to follow the following rules:
         Generate a prediction for the next action based on the webpage elements and previous actions.
         """
 
+        # if  "https://www.google.com" in self.page.url:
+        #     self.save_action_history(filename=f"./traj_history/{self.episode_name}/action_history.txt")
+        #     return None
+
+
         self.time_step += 1
 
         try:
@@ -601,42 +622,53 @@ To be successful, it is important to follow the following rules:
         except Exception as e:
             pass
 
+        
+        if self.inference_mode == "extract":
+            json_path = self.image_json
+            # for injection in self.injections[0]:
+
+            #     image_info = await self.page.evaluate(injection)
+
+            #     # Write each image info as a separate line
+            #     with open(json_path, "a", encoding="utf-8") as f:
+            #         for item in image_info:
+            #             print("WRITING")
+            #             f.write(json.dumps(item, ensure_ascii=False) + "\n")
+            #             f.flush()
 
 
-        # for injection in self.injections[0]:
-        #     # image_info = await self.page.evaluate(injection)
-        #     # import json
+            # Load existing data if file exists; otherwise, start with an empty list
+            if os.path.exists(json_path):
+                with open(json_path, "r", encoding="utf-8") as f:
+                    all_image_info = json.load(f)
+            else:
+                all_image_info = []
 
-        #     # # Write the list of image info to a file
-        #     # with open("/home/brandonhuang/SeeAct/mmagent_attack/image_info.json", "w", encoding="utf-8") as f:
-        #     #     json.dump(image_info, f, ensure_ascii=False, indent=2)
-        #     # assert False
+            # Collect and append new items
+            for injection in self.injections[0]:
+                image_info = await self.page.evaluate(injection)
 
+                for item in image_info:
+                    all_image_info.append(item['src'])
 
-        #     image_info = await self.page.evaluate(injection)
-        #     json_path = "/home/brandonhuang/SeeAct/mmagent_attack/image_info.jsonl"
-
-        #     # Write each image info as a separate line
-        #     with open(json_path, "a", encoding="utf-8") as f:
-        #         for item in image_info:
-        #             print("WRITING")
-        #             f.write(json.dumps(item, ensure_ascii=False) + "\n")
-        #             f.flush()
+            # Write the updated list back to the JSON file
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(all_image_info, f, ensure_ascii=False, indent=4)
 
 
+            # for injected_url in self.injections[1]:
+            #     await self.page.wait_for_selector(f'a[href="{injected_url}"]')
 
-        # for injected_url in self.injections[1]:
-        #     await self.page.wait_for_selector(f'a[href="{injected_url}"]')
+        elif self.inference_mode == "attack":
 
+            for injection in self.injections[0]:
+                await self.page.evaluate(injection)
 
-        for injection in self.injections[0]:
-            await self.page.evaluate(injection)
-
-        for injected_url in self.injections[1]:
-            try:
-                await self.page.wait_for_selector(f'a[href="{injected_url}"]', timeout=3000)
-            except:
-                print("Selector not found within 3 seconds, continuing...")
+            for injected_url in self.injections[1]:
+                try:
+                    await self.page.wait_for_selector(f'a[href="{injected_url}"]', timeout=3000)
+                except:
+                    print("Selector not found within 3 seconds, continuing...")
 
 
         elements = await get_interactive_elements_with_playwright(self.page,
@@ -700,7 +732,8 @@ To be successful, it is important to follow the following rules:
 
         # print("\n\n",choices)
         prompt = self.generate_prompt(task=self.tasks[-1], previous=self.taken_actions, choices=choices)
-        # print("\n\n",prompt)
+
+        #print("\n\n",prompt)
 
         # Logging prompt for debugging
 
